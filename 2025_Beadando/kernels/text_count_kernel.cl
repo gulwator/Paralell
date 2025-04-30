@@ -8,13 +8,23 @@ __kernel void text_count_kernel(__global const char* text, __global int* global_
     int id = get_global_id(0);
     int start = id * block_size;
     int end = min(start + block_size, text_size);
-    int local_hist[256] = {0};
+   __local int local_hist[256];
 
-    for (int i = start; i < end; i++) {
-        atomic_inc(&local_hist[(int)text[i]]);
+    for (int i = get_local_id(0); i < 256; i+= get_local_size(0)) {
+        local_hist[i]=0;
     }
+    
+    barrier(CLK_LOCAL_MEM_FENCE);
+    
+    for(int i = start; i < end; i++){
+        if(i<text_size){
+        atomic_add(&local_hist[(int)text[i]],1);
 
-    for (int j = 0; j < 256; j++) {
-        atomic_add(&global_histogram[j], local_hist[j]);
+        }
+    }
+    
+    barrier(CLK_LOCAL_MEM_FENCE);
+    for (int i = get_local_id; i < 256; i+=get_local_size(0)) {
+        atomic_add(&global_histogram[i], local_hist[i]);
     }
 }
