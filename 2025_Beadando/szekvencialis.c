@@ -14,7 +14,7 @@ void count_characters(const char* text, int length, int* counts) {
 
 int main() {
     // Fájl megnyitása
-    char* filename = "long-doc.txt";
+    char* filename = "bigfile.txt";
     FILE* file = fopen(filename, "r");
     if (!file) {
         printf("Nem sikerult megnyitni a fajlt!\n");
@@ -25,6 +25,12 @@ int main() {
     fseek(file, 0, SEEK_END);
     long txt_length = ftell(file);
     fseek(file, 0, SEEK_SET);
+
+    // Szöveg tördelése
+    int sizes[250000,500000,750000,1000000,1250000,1500000,1750000,2000000,
+             2250000,2500000,2750000,3000000,3250000,3500000,3750000,4000000,
+             4250000,4500000,4750000,5000000,5250000,5500000,5750000,6000000,6250000]
+
 
     char* text = (char*)malloc(txt_length * sizeof(char));
     if (!text) {

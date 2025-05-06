@@ -1,2 +1,4 @@
-alma, korte, szilva, barack
-csirke, barany, sertes
+5589865 karakter esetén: i7-12700	CPU: 0.004460
+5589865 karakter esetén: i7-12700 	GPU: 0.022421
+5589865 karakter esetén: i5-3320 	CPU: 0.014836
+5589865 karakter esetén: i5-3320 	GPU: 0.102074

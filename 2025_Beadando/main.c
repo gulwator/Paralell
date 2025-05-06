@@ -17,7 +17,7 @@ int main(void)
 
     // Szöveg betöltése
     int txt_length = 0;
-    char* filename = "long-doc.txt";
+    char* filename = "midmidbigfile.txt";
     char* text = load_text_file(filename, &txt_length);
     if (!text) {
         printf("Nem sikerult beolvasni a fajlt!\n");
@@ -35,22 +35,25 @@ int main(void)
     cl_device_id device_id;
     cl_uint n_devices;
     err = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &n_devices);
+    printf("Eszkozoket lekerdeztem \n");
     
+
     // Kontextus és parancssor létrehozása
-    cl_context context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &err);
+    cl_context context = clCreateContext(NULL, n_devices, &device_id, NULL, NULL, &err);
     cl_command_queue queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+    printf("kontextus es parancssor letrehozasaig eljutottunk\n");
     
     // Kernel betöltése és fordítása
     int error_code;
-    const char* kernel_code = load_kernel_source("kernels/text_count_kernel.cl", &error_code);
-    if (error_code != 0) {
+    const char* kernel_code = load_kernel_source("kernels/text_count_kernel.cl", &err);
+    if (err != CL_SUCCESS) {
         printf("Nem sikerult betolteni a kernelt!\n");
         return 1;
     }
     
     cl_program program = clCreateProgramWithSource(context, 1, &kernel_code, NULL, &err);
     err = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
-
+    
     if (err != CL_SUCCESS) {
         size_t log_size;
         clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
@@ -60,31 +63,50 @@ int main(void)
         free(log);
         return 1;
     }
-
+    printf("Hibakat lekezeltük\n");
     cl_kernel kernel = clCreateKernel(program, "text_count_kernel", &err);
+    if(err != CL_SUCCESS){
+        printf("Itt a hiba");
+    }
+    printf("Buffer előtt\n");
     
     // Buffer létrehozása
     cl_mem text_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, txt_length * sizeof(char), text, &err);
+    clFinish(queue); 
+    printf("Bufferkozott\n");
+    
+    if(err != CL_SUCCESS){
+        printf("Itt a hiba");
+    }
     cl_mem result_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, 256 * sizeof(int), NULL, &err);
+    clFinish(queue); 
+    
+    if(err != CL_SUCCESS){
+        printf("vagy Itt a hiba");
+    }
+
+    printf("buffer inicializalasaig eljutottunk\n");
     
     
     // Eredmény buffer inicializálása nullára
     int zeros[256] = {0};
     clEnqueueWriteBuffer(queue, result_buffer, CL_TRUE, 0, 256 * sizeof(int), zeros, 0, NULL, NULL);
     clFinish(queue); 
+    printf("Eredmeny buffer inicializalasaig eljutottunk\n");
     
     // Kernel argumentumok beállítása
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &text_buffer);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &result_buffer);
     clSetKernelArg(kernel, 2, sizeof(int), &txt_length);
-    
+    printf("kernel argumentumokig eljutottunk\n");
+
     // Kernel futtatása
     size_t global_work_size = txt_length;
     cl_event event;
     err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_work_size, NULL, 0, NULL, &event);
     clFinish(queue);
     
-    
+    printf("idomeres elott allt le\n");
     // Időmérés
     cl_ulong start, end;
     clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(start), &start, NULL);
