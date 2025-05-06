@@ -14,7 +14,7 @@ void count_characters(const char* text, int length, int* counts) {
 
 int main() {
     // Fájl megnyitása
-    char* filename = "mid-doc.txt";
+    char* filename = "long-doc.txt";
     FILE* file = fopen(filename, "r");
     if (!file) {
         printf("Nem sikerult megnyitni a fajlt!\n");
@@ -36,35 +36,35 @@ int main() {
     fread(text, sizeof(char), txt_length, file);
     fclose(file);
 
-    printf("Szoveg hossza: %ld karakter\n", txt_length);
-
+    
     int counts[MAX_CHAR] = {0};
-
+    
     // Időmérés kezdete
     LARGE_INTEGER freq, start, end;
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&start);
-
+    
     // Számlálás
     count_characters(text, txt_length, counts);
-
+    
     // Időmérés vége
     QueryPerformanceCounter(&end);
     double elapsed_time = (double)(end.QuadPart - start.QuadPart) / freq.QuadPart;
 
-    printf("Szekvencialis futasi ido: %.6f masodperc\n", elapsed_time);
-
+    
     // Eredmények kiírása
     printf("\nKaraktergyakorisag:\n");
     for (int i = 0; i < MAX_CHAR; ++i) {
         if (counts[i] > 0) {
             if (i >= 32 && i <= 126)
-                printf("'%c' (%d): %d\n", i, i, counts[i]);
+            printf("'%c' (%d): %d\n", i, i, counts[i]);
             else
-                printf("[0x%02x] (%d): %d\n", i, i, counts[i]);
+            printf("[0x%02x] (%d): %d\n", i, i, counts[i]);
         }
     }
-
+    printf("Szoveg hossza: %ld karakter\n", txt_length);
+    printf("Szekvencialis futasi ido: %.6f masodperc\n", elapsed_time);
+    
     free(text);
     return 0;
 }
