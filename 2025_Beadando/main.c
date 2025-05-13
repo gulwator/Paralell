@@ -24,6 +24,19 @@ int main(void)
         return 1;
     }
 
+     // Méretek a teszthez
+    int sizes[] = {250000, 500000, 750000, 1000000, 1250000, 1500000, 1750000, 2000000,
+                   2250000, 2500000, 2750000, 3000000, 3250000, 3500000, 3750000, 4000000,
+                   4250000, 4500000, 4750000, 5000000, 5250000, 5500000, 5750000, 6000000, 6250000};
+
+
+     // CSV fájl megnyitása írásra
+    FILE* csv_file = fopen("opencl_timing_results.csv", "w");
+    if (!csv_file) {
+        printf("Nem sikerult megnyitni a CSV fajlt!\n");
+        free(text);
+        return 1;
+    }
     
     
     // Platform lekérdezése
@@ -70,6 +83,9 @@ int main(void)
     }
     printf("Buffer előtt\n");
     
+ for (int i = 0; i < sizeof(sizes) / sizeof(sizes[0]); ++i) {
+        if (sizes[i] > txt_length) break;
+
     // Buffer létrehozása
     cl_mem text_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, txt_length * sizeof(char), text, &err);
     clFinish(queue); 
@@ -97,11 +113,11 @@ int main(void)
     // Kernel argumentumok beállítása
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &text_buffer);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &result_buffer);
-    clSetKernelArg(kernel, 2, sizeof(int), &txt_length);
+    clSetKernelArg(kernel, 2, sizeof(int), &sizes[i]);
     printf("kernel argumentumokig eljutottunk\n");
 
     // Kernel futtatása
-    size_t global_work_size = txt_length;
+    size_t global_work_size = sizes[i];
     cl_event event;
     err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_work_size, NULL, 0, NULL, &event);
     clFinish(queue);
@@ -131,9 +147,12 @@ int main(void)
     printf("Szoveg hossza: %d karakter\n", txt_length);
     printf("Parhuzamos futasi ido: %.6f masodperc\n", elapsed_time);
     
+        // Idő kiírása CSV fájlba
+        fprintf(csv_file, "%.6f%s", elapsed_time, (i == (sizeof(sizes) / sizeof(sizes[0])) - 1) ? "\n" : ",");
+        clReleaseMemObject(text_buffer);
+        clReleaseMemObject(result_buffer);
+}
     // Erőforrások felszabadítása
-    clReleaseMemObject(text_buffer);
-    clReleaseMemObject(result_buffer);
     clReleaseKernel(kernel);
     clReleaseProgram(program);
     clReleaseCommandQueue(queue);
